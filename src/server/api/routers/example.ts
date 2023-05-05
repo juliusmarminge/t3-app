@@ -21,7 +21,7 @@ export const exampleRouter = createTRPCRouter({
     });
     const duration = Date.now() - startTime;
 
-    return { items, duration };
+    return { items, duration, fetchedAt: new Date(startTime) };
   }),
 
   create: publicProcedure
