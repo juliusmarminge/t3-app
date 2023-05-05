@@ -25,7 +25,7 @@ export const exampleRouter = createTRPCRouter({
   }),
 
   create: publicProcedure
-    .input(z.object({ text: z.string().min(5) }))
+    .input(z.object({ text: z.string().min(1) }))
     .mutation((opts) => {
       return opts.ctx.db.example.create({
         data: {
