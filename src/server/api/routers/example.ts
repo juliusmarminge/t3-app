@@ -15,7 +15,10 @@ export const exampleRouter = createTRPCRouter({
 
   getAll: publicProcedure.query(async (opts) => {
     const startTime = Date.now();
-    const items = await opts.ctx.db.example.findMany();
+    const items = await opts.ctx.db.example.findMany({
+      take: 10,
+      orderBy: { updatedAt: "desc" },
+    });
     const duration = Date.now() - startTime;
 
     return { items, duration };
