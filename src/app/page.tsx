@@ -37,11 +37,11 @@ export default function HomePage() {
             </div>
           </Link>
         </div>
-        <div className="flex w-full flex-col items-center gap-8">
+        <div className="flex w-full max-w-sm flex-col items-center gap-8">
           {/** @ts-expect-error - Async Server Component */}
           <AuthShowcase />
           <form
-            className="space-y-2"
+            className="w-full space-y-2"
             action={async (fd) => {
               "use server";
 
@@ -56,7 +56,8 @@ export default function HomePage() {
           >
             <input
               name="text"
-              className="flex h-10 w-full rounded-md border-2 border-primary bg-transparent px-3 py-2 text-sm"
+              placeholder="Enter some text"
+              className="flex h-10 w-full rounded-md border border-primary bg-transparent px-3 py-2 text-sm"
             />
             <SubmitButton type="submit">Submit</SubmitButton>
           </form>
@@ -97,14 +98,14 @@ async function AuthShowcase() {
   //   session?.user && (await api.example.getSecretMessage.query());
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
+    <div className="flex w-full flex-col items-center justify-center gap-4">
       <p className="text-center text-2xl text-white">
         {session && <span>Logged in as {session.user?.name}</span>}
         {/* {secretMessage && <span> - {secretMessage}</span>} */}
       </p>
       <Link
         href={session ? "/api/auth/signout" : "/api/auth/signin"}
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        className="inline-flex w-full items-center justify-center rounded-md bg-primary p-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
       >
         {session ? "Sign out" : "Sign in"}
       </Link>
