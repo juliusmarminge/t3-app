@@ -1,11 +1,11 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { api } from "trpc-api";
 import { getServerAuthSession } from "~/server/auth";
+import { type RouterOutputs, api } from "trpc-api";
+import { revalidateTag } from "next/cache";
 
-export default async function HomePage() {
-  const hello = await api.example.hello.query({ text: "from tRPC" });
-
+export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
@@ -36,27 +36,72 @@ export default async function HomePage() {
             </div>
           </Link>
         </div>
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-2xl text-white">{hello.greeting}</p>
+        <div className="flex w-full flex-col items-center gap-8">
           {/** @ts-expect-error - Async Server Component */}
           <AuthShowcase />
+          <form
+            className="space-y-2"
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            action={async (fd) => {
+              "use server";
+
+              const text = fd.get("text") as string;
+              await api.example.create.mutate({ text });
+
+              // TODO: trpc.example.create.revalidate();
+              const tag = `example.getAll`;
+              console.log("Revalidating tag", tag);
+              revalidateTag(tag);
+            }}
+          >
+            <input
+              name="text"
+              className="flex h-10 w-full rounded-md border-2 border-primary bg-transparent px-3 py-2 text-sm"
+            />
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary p-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            >
+              Submit
+            </button>
+          </form>
+          <Suspense fallback={<div>Loading...</div>}>
+            {/** @ts-expect-error - Async Server Component */}
+            <PostList promise={api.example.getAll.query()} />
+          </Suspense>
         </div>
       </div>
     </main>
   );
 }
 
+async function PostList(props: {
+  promise: Promise<RouterOutputs["example"]["getAll"]>;
+}) {
+  const posts = await props.promise;
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {posts.map((post) => (
+        <p key={post.id} className="text-lg">
+          {post.text}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 async function AuthShowcase() {
   const session = await getServerAuthSession();
 
-  const secretMessage =
-    session?.user && (await api.example.getSecretMessage.query());
+  // const secretMessage =
+  //   session?.user && (await api.example.getSecretMessage.query());
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <p className="text-center text-2xl text-white">
         {session && <span>Logged in as {session.user?.name}</span>}
-        {secretMessage && <span> - {secretMessage}</span>}
+        {/* {secretMessage && <span> - {secretMessage}</span>} */}
       </p>
       <Link
         href={session ? "/api/auth/signout" : "/api/auth/signin"}

@@ -2,7 +2,7 @@ import { createTRPCProxyClient, httpLink } from "@trpc/client";
 
 import type { AppRouter } from "~/server/api/root";
 import { getUrl, transformer } from "./shared";
-import { headers } from "next/headers";
+// import { headers } from "next/headers";
 
 export type * from "./shared";
 
@@ -13,7 +13,8 @@ export const api = createTRPCProxyClient<AppRouter>({
       return (ctx) => {
         const { op } = ctx;
         const { path, input, type } = op;
-        const tag = `${path}?input=${JSON.stringify(input)}`;
+        let tag = path;
+        input && (tag += `?input=${JSON.stringify(input)}`);
 
         type === "query" && console.log("Fetching with tag", tag);
 
@@ -25,11 +26,8 @@ export const api = createTRPCProxyClient<AppRouter>({
               next: type === "query" ? { tags: [tag] } : undefined,
             });
           },
-          // FIXME: We need the headers for auth - but server actions just breaks with them...
-          headers: () => {
-            const { connection: _, ...h } = Object.fromEntries(headers());
-            return h;
-          },
+          // FIXME: Need headers for auth - but that doesn't seem to work very well in SA
+          // headers: () => Object.fromEntries(headers()),
         })(runtime);
 
         return link(ctx);
