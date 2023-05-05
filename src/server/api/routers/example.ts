@@ -13,8 +13,12 @@ export const exampleRouter = createTRPCRouter({
     };
   }),
 
-  getAll: publicProcedure.query((opts) => {
-    return opts.ctx.db.example.findMany();
+  getAll: publicProcedure.query(async (opts) => {
+    const startTime = Date.now();
+    const items = await opts.ctx.db.example.findMany();
+    const duration = Date.now() - startTime;
+
+    return { items, duration };
   }),
 
   create: publicProcedure

@@ -77,7 +77,8 @@ async function PostList(props: {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      {posts.map((post) => (
+      <p>Fetched posts in {posts.duration} ms.</p>
+      {posts.items.map((post) => (
         <p key={post.id} className="text-lg">
           {post.text}
         </p>
