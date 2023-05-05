@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { getServerAuthSession } from "~/server/auth";
 import { type RouterOutputs, api } from "trpc-api";
 import { revalidateTag } from "next/cache";
+import { SubmitButton } from "./_components/form";
 
 export default function HomePage() {
   return (
@@ -41,7 +42,6 @@ export default function HomePage() {
           <AuthShowcase />
           <form
             className="space-y-2"
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             action={async (fd) => {
               "use server";
 
@@ -58,12 +58,7 @@ export default function HomePage() {
               name="text"
               className="flex h-10 w-full rounded-md border-2 border-primary bg-transparent px-3 py-2 text-sm"
             />
-            <button
-              type="submit"
-              className="inline-flex w-full items-center justify-center rounded-md bg-primary p-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-            >
-              Submit
-            </button>
+            <SubmitButton type="submit">Submit</SubmitButton>
           </form>
           <Suspense fallback={<div>Loading...</div>}>
             {/** @ts-expect-error - Async Server Component */}
