@@ -1,37 +1,16 @@
-import { createTRPCProxyClient, httpLink } from "@trpc/client";
+import { createTRPCNextCaller } from "@trpc/app-router";
+import { type inferRouterOutputs } from "@trpc/server";
 
-import type { AppRouter } from "~/server/api/root";
-import { getUrl, transformer } from "./shared";
-// import { headers } from "next/headers";
+import { appRouter } from "~/server/api/root";
+import { createInnerTRPCContext } from "~/server/api/trpc";
+import { getServerAuthSession } from "~/server/auth";
 
-export type * from "./shared";
-
-export const api = createTRPCProxyClient<AppRouter>({
-  transformer,
-  links: [
-    (runtime) => {
-      return (ctx) => {
-        const { op } = ctx;
-        const { path, input, type } = op;
-        let tag = path;
-        input && (tag += `?input=${JSON.stringify(input)}`);
-
-        type === "query" && console.log("Fetching with tag", tag);
-
-        const link = httpLink({
-          url: getUrl(),
-          fetch: (url, opts) => {
-            return fetch(url, {
-              ...opts,
-              next: type === "query" ? { tags: [tag] } : undefined,
-            });
-          },
-          // FIXME: Need headers for auth - but that doesn't seem to work very well in SA
-          // headers: () => Object.fromEntries(headers()),
-        })(runtime);
-
-        return link(ctx);
-      };
-    },
-  ],
+export const api = createTRPCNextCaller({
+  router: appRouter,
+  createContext: async () => {
+    const session = await getServerAuthSession();
+    return createInnerTRPCContext({ session });
+  },
 });
+
+export type RouterOutputs = inferRouterOutputs<typeof appRouter>;

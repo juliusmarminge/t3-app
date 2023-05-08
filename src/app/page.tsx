@@ -83,7 +83,7 @@ async function PostList(props: {
   return (
     <div className="flex flex-col items-center gap-2">
       <p className="-mt-4 mb-2 text-lg font-semibold">
-        Fetched posts at {posts.fetchedAt.toLocaleTimeString()} in{" "}
+        Fetched posts at {new Date(posts.fetchedAt).toLocaleTimeString()} in{" "}
         {posts.duration} ms.
       </p>
       {posts.items.map((post) => (
