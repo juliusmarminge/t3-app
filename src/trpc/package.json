@@ -1,6 +1,6 @@
 {
     "name": "trpc-api",
-    "typings": "server.ts",
+    "typings": "client.ts",
     "exports": {
       ".": {
         "types": "./client.ts",

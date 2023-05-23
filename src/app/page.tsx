@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { getServerAuthSession } from "~/server/auth";
 import { type RouterOutputs, api } from "trpc-api";
-import { revalidateTag } from "next/cache";
-import { SubmitButton } from "./_components/form";
+import { ServerForm } from "./server-form";
+
+import { AuthShowcase } from "./auth-showcase";
 
 export default function HomePage() {
   return (
@@ -40,34 +40,14 @@ export default function HomePage() {
         <div className="flex w-full max-w-sm flex-col items-center gap-8">
           {/** @ts-expect-error - Async Server Component */}
           <AuthShowcase />
-          <form
-            className="w-full space-y-2"
-            action={async (fd) => {
-              "use server";
 
-              const text = fd.get("text") as string;
-              try {
-                await api.example.create.mutate({ text });
-              } catch {
-                return;
-              }
+          <div className="flex h-max items-start justify-start gap-2">
+            <ServerForm />
+          </div>
 
-              // TODO: trpc.example.create.revalidate();
-              const tag = `example.getAll`;
-              console.log("Revalidating tag", tag);
-              revalidateTag(tag);
-            }}
-          >
-            <input
-              name="text"
-              placeholder="Enter some text"
-              className="flex h-10 w-full rounded-md border border-primary bg-transparent px-3 py-2 text-sm"
-            />
-            <SubmitButton type="submit">Submit</SubmitButton>
-          </form>
           <Suspense fallback={<div>Loading...</div>}>
             {/** @ts-expect-error - Async Server Component */}
-            <PostList promise={api.example.getAll.query()} />
+            <PostList promise={api.post.getAll.query()} />
           </Suspense>
         </div>
       </div>
@@ -76,43 +56,17 @@ export default function HomePage() {
 }
 
 async function PostList(props: {
-  promise: Promise<RouterOutputs["example"]["getAll"]>;
+  promise: Promise<RouterOutputs["post"]["getAll"]>;
 }) {
   const posts = await props.promise;
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <p className="-mt-4 mb-2 text-lg font-semibold">
-        Fetched posts at {posts.fetchedAt.toLocaleTimeString()} in{" "}
-        {posts.duration} ms.
-      </p>
       {posts.items.map((post) => (
         <p key={post.id} className="text-lg">
-          {post.text}
+          {post.text} - {post.createdBy.name}
         </p>
       ))}
-    </div>
-  );
-}
-
-async function AuthShowcase() {
-  const session = await getServerAuthSession();
-
-  // const secretMessage =
-  //   session?.user && (await api.example.getSecretMessage.query());
-
-  return (
-    <div className="flex w-full flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl">
-        {session && <span>Logged in as {session.user?.name}</span>}
-        {/* {secretMessage && <span> - {secretMessage}</span>} */}
-      </p>
-      <Link
-        href={session ? "/api/auth/signout" : "/api/auth/signin"}
-        className="inline-flex w-full items-center justify-center rounded-md bg-primary p-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-      >
-        {session ? "Sign out" : "Sign in"}
-      </Link>
     </div>
   );
 }

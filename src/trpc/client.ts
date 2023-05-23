@@ -1,30 +1,41 @@
-import { createTRPCProxyClient, httpLink, loggerLink } from "@trpc/client";
+"use client";
+
+import { httpBatchLink, loggerLink } from "@trpc/client";
+import {
+  experimental_createActionHook,
+  experimental_createTRPCNextAppDirClient,
+  experimental_serverActionLink,
+} from "@trpc/next/app-dir/client";
 import type { AppRouter } from "~/server/api/root";
 import { getUrl, transformer } from "./shared";
 
-export type * from "./shared";
-
-export const api = createTRPCProxyClient<AppRouter>({
-  transformer,
-  links: [
-    loggerLink(),
-    (runtime) => {
-      return (ctx) => {
-        const { op } = ctx;
-        const { path } = op;
-
-        const link = httpLink({
+export const api = experimental_createTRPCNextAppDirClient<AppRouter>({
+  config() {
+    return {
+      transformer,
+      links: [
+        loggerLink({
+          enabled: (op) =>
+            process.env.NODE_ENV === "development" ||
+            (op.direction === "down" && op.result instanceof Error),
+        }),
+        httpBatchLink({
           url: getUrl(),
-          fetch: (url, opts) => {
-            return fetch(url, {
-              ...opts,
-              next: { tags: [path] },
-            });
+          headers() {
+            return {
+              "x-trpc-source": "client",
+            };
           },
-        })(runtime);
-
-        return link(ctx);
-      };
-    },
-  ],
+        }),
+      ],
+    };
+  },
 });
+
+export const useAction = experimental_createActionHook({
+  links: [loggerLink(), experimental_serverActionLink()],
+  transformer,
+});
+
+/** Export type helpers */
+export type * from "./shared";

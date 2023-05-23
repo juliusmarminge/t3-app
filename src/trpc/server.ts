@@ -1,37 +1,34 @@
-import { createTRPCProxyClient, httpLink } from "@trpc/client";
+"use server";
 
+import { httpBatchLink, loggerLink } from "@trpc/client";
+import { experimental_createTRPCNextAppDirServer } from "@trpc/next/app-dir/server";
+import { headers } from "next/headers";
 import type { AppRouter } from "~/server/api/root";
 import { getUrl, transformer } from "./shared";
-// import { headers } from "next/headers";
 
-export type * from "./shared";
-
-export const api = createTRPCProxyClient<AppRouter>({
-  transformer,
-  links: [
-    (runtime) => {
-      return (ctx) => {
-        const { op } = ctx;
-        const { path, input, type } = op;
-        let tag = path;
-        input && (tag += `?input=${JSON.stringify(input)}`);
-
-        type === "query" && console.log("Fetching with tag", tag);
-
-        const link = httpLink({
+export const api = experimental_createTRPCNextAppDirServer<AppRouter>({
+  config() {
+    return {
+      transformer,
+      links: [
+        loggerLink({
+          enabled: (op) =>
+            process.env.NODE_ENV === "development" ||
+            (op.direction === "down" && op.result instanceof Error),
+        }),
+        httpBatchLink({
           url: getUrl(),
-          fetch: (url, opts) => {
-            return fetch(url, {
-              ...opts,
-              next: type === "query" ? { tags: [tag] } : undefined,
-            });
+          headers() {
+            // Forward headers from the browser to the API
+            return {
+              ...Object.fromEntries(headers()),
+              "x-trpc-source": "rsc",
+            };
           },
-          // FIXME: Need headers for auth - but that doesn't seem to work very well in SA
-          // headers: () => Object.fromEntries(headers()),
-        })(runtime);
-
-        return link(ctx);
-      };
-    },
-  ],
+        }),
+      ],
+    };
+  },
 });
+
+// export const createAction =

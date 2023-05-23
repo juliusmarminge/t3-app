@@ -1,8 +1,8 @@
 import { type NextAuthOptions, type DefaultSession } from "next-auth";
-import { getServerSession } from "next-auth/next";
+import { getServerSession as $getServerSession } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { env } from "~/env.mjs";
+
 import { prisma } from "~/server/db";
 
 /**
@@ -44,8 +44,8 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     DiscordProvider({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
+      clientId: process.env.DISCORD_CLIENT_ID as string,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
     }),
     /**
      * ...add more providers here.
@@ -64,6 +64,4 @@ export const authOptions: NextAuthOptions = {
  *
  * @see https://next-auth.js.org/configuration/nextjs
  */
-export const getServerAuthSession = () => {
-  return getServerSession(authOptions);
-};
+export const getServerSession = () => $getServerSession(authOptions);

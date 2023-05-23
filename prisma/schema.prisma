@@ -7,17 +7,18 @@ generator client {
 }
 
 datasource db {
-    provider          = "postgres"
-    url               = env("DATABASE_URL") // uses connection pooling
-    directUrl         = env("DATABASE_URL_NON_POOLING") // uses a direct connection
-    shadowDatabaseUrl = env("DATABASE_URL_NON_POOLING") // used for migrations
+    provider          = "sqlite"
+    url               = env("DATABASE_URL")
 }
 
-model Example {
+model Post {
     id        String   @id @default(cuid())
     text      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    createdBy   User   @relation(fields: [createdById], references: [id])
+    createdById String
 }
 
 // Necessary for Next auth
@@ -27,12 +28,12 @@ model Account {
     type              String
     provider          String
     providerAccountId String
-    refresh_token     String? @db.Text
-    access_token      String? @db.Text
+    refresh_token     String? // @db.Text
+    access_token      String? // @db.Text
     expires_at        Int?
     token_type        String?
     scope             String?
-    id_token          String? @db.Text
+    id_token          String? // @db.Text
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -55,6 +56,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
+    posts         Post[]
 }
 
 model VerificationToken {
